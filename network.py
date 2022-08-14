@@ -11,7 +11,8 @@ def feed_forward(x, layers):
     values = []
     H = x
     for (i, layer) in enumerate(layers):
-        net_H = np.matmul(H, layer)
+        weights = concat_bias_weights(layer)
+        net_H = np.matmul(H, weights)
         H = relu(net_H)
 
     y_hat = H[0][0]
@@ -31,5 +32,12 @@ layers = [
     np.random.random((3, 2)),
     np.array([[1], [1]]),
 ]
-    
 
+def build_dataset_inside_outside_circle():
+    # Create some data in a 20x20 box centered at origin.
+    radius = 5
+    X = np.random.random((10000, 2)) * 40 + -20
+    f = (lambda a: int(np.sqrt(a[0]**2 + a[1]**2) <= radius))
+    Y = np.array(list(map(f, X)))
+    return X, Y
+X, Y = build_dataset_inside_outside_circle() 
