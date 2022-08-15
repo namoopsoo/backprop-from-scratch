@@ -2,7 +2,9 @@ import numpy as np
 from functools import partial
 from sklearn.utils.extmath import softmax
 from sklearn.metrics import log_loss
+from collections import namedtuple
 
+Layer = namedtuple("Layer", ["weights", "bias"])
 
 relu_scalar = partial(max, 0)
 relu = np.vectorize(relu_scalar)
@@ -11,11 +13,15 @@ def feed_forward(x, layers):
     values = []
     H = x
     for (i, layer) in enumerate(layers):
-        weights = concat_bias_weights(layer)
+        print(i, layer)
+        weights = concat_bias_weights(layer.weights)
+        H = np.hstack([H, layer.bias])
+        print("sizes:", H.shape, weights.shape)
         net_H = np.matmul(H, weights)
         H = relu(net_H)
+        print("output of relu", H)
 
-    y_hat = H[0][0]
+    y_hat = H[0]
     assert isinstance(y_hat, np.int64) or isinstance(y_hat, np.float64)
     return y_hat
 
@@ -28,9 +34,9 @@ def concat_bias_weights(x):
     return np.concatenate([x, np.ones((1, num_cols))])
 
 layers = [
-    np.random.random((2, 3)),
-    np.random.random((3, 2)),
-    np.array([[1], [1]]),
+    Layer(weights=np.random.random((2, 3)), bias=np.array([1])),
+    Layer(weights=np.random.random((3, 2)), bias=np.array([1])), 
+    Layer(weights=np.array([[1], [1]]), bias=np.array([0])), 
 ]
 
 def build_dataset_inside_outside_circle():
