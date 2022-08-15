@@ -9,6 +9,13 @@ Layer = namedtuple("Layer", ["weights", "bias"])
 relu_scalar = partial(max, 0)
 relu = np.vectorize(relu_scalar)
 
+def derivative_of_relu(h_net):
+    if h_net > 0:
+        return 1
+    else:
+        return 0
+
+
 def feed_forward(x, layers):
     values = []
     H = x
@@ -21,7 +28,8 @@ def feed_forward(x, layers):
         H = relu(net_H)
         print("output of relu", H)
 
-    y_hat = H[0]
+        y_logit = H[0]
+        y_hat = logit_to_prob(y_logit)
     assert isinstance(y_hat, np.int64) or isinstance(y_hat, np.float64)
     return y_hat
 
@@ -42,9 +50,18 @@ def logit_to_prob(y_logit):
     return prob
 
 
+def derivative_of_logit_to_prob_func(y_logit):
+    return np.exp(y_logit) / ((1 + np.exp(y_logit))**2)
+
+
 def loss(y, y_hat):
-    # log loss 
-    ...
+    return log_loss(y, y_hat, labels=[0, 1])
+
+
+def derivative_of_log_loss(y, y_hat):
+    # using y_hat and y_prob interchangeably
+    return -y / y_hat - (1 - y) / (1 - y_hat)
+
 
 
 def concat_bias_weights(x):
@@ -57,6 +74,8 @@ layers = [
     Layer(weights=np.array([[1], [1]]), bias=np.array([0])), 
 ]
 
+# network = layers, all the hidden values and net values , output also , 
+
 def build_dataset_inside_outside_circle():
     # Create some data in a 20x20 box centered at origin.
     radius = 5
@@ -65,3 +84,48 @@ def build_dataset_inside_outside_circle():
     Y = np.array(list(map(f, X)))
     return X, Y
 X, Y = build_dataset_inside_outside_circle() 
+
+
+
+
+
+def train_network():
+    # sgd loop
+
+    # sample minibatch , (x, y), 
+    # do the feed forward for (x, y) that. 
+    for step in range(10):
+
+        for parameter in all_parameters:
+
+            # calculate partial derivative at (x, y)
+
+            # then update the parameter using the learning rate.
+            #   storing in temporary values until later.
+
+
+        # now finally update the actual parameters.
+
+
+
+def calc_partial_derivative_of_loss_wrt_w13(network):
+
+    # net_y = w13*h4 + w14*h5 
+    # y_logit = relu(net_y)
+    # y_prob = logit_to_prob(y_logit)
+    # loss = log_loss(y_actual, y_prob)
+
+    # by chain rule, 
+    derivative = pd_log_loss_wrt_prob * pd_prob_wrt_logit * pd_logit_wrt_net_y * pd_net_y_wrt_w13
+
+    y = 
+    y_hat = 
+    y_logit = 
+    y_net = 
+    h4 = 
+
+    derivative_of_log_loss(y, y_hat)
+    derivative_of_logit_to_prob_func(y_logit)
+    derivative_of_relu(y_net)
+    h4
+
