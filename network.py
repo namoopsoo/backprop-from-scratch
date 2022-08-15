@@ -25,9 +25,27 @@ def feed_forward(x, layers):
     assert isinstance(y_hat, np.int64) or isinstance(y_hat, np.float64)
     return y_hat
 
+def logit_to_prob(y_logit):
+    # Well since this neural net is not returning a probability by default, 
+    #   then we need something like softmax to do that. 
+    #   Also this person , https://sebastiansauer.github.io/convert_logit2prob/ , 
+    #   notes another possible option is 
+    #
+    #   given a logit, 
+    #       odds = exp(logit)
+    #       prob = odds / (1 + odds)
+    # 
+    # Hmm thing is I can't use softmax since I only have a single output logit.
+
+    odds = np.exp(y_logit)
+    prob = odds / (1 + odds)
+    return prob
+
+
 def loss(y, y_hat):
     # log loss 
     ...
+
 
 def concat_bias_weights(x):
     num_cols = x.shape[1]
