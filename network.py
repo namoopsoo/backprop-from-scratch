@@ -4,7 +4,7 @@ from sklearn.utils.extmath import softmax
 from sklearn.metrics import log_loss
 from collections import namedtuple
 
-Layer = namedtuple("Layer", ["weights", "bias"])
+Layer = namedtuple("Layer", ["weights", "bias", "nodes"])
 
 relu_scalar = partial(max, 0)
 relu = np.vectorize(relu_scalar)
@@ -26,12 +26,33 @@ def feed_forward(x, layers):
         print("sizes:", H.shape, weights.shape)
         net_H = np.matmul(H, weights)
         H = relu(net_H)
+
+        # TODO update the layer
+        if i == 0:
+            layer.nodes["net_h1"] = net_H[0]
+            layer.nodes["h1"] = H[0]
+            layer.nodes["net_h2"] = net_H[1]
+            layer.nodes["h2"] = H[1]
+            layer.nodes["net_h3"] = net_H[2]
+            layer.nodes["h3"] = H[2]
+        elif i == 1:
+            layer.nodes["net_h4"] = net_H[0]
+            layer.nodes["h4"] = H[0]
+            layer.nodes["net_h5"] = net_H[1]
+            layer.nodes["h5"] = H[1]
+        elif i == 2:
+            layer.nodes["net_y_logit"] = net_H[0]
+            layer.nodes["y_logit"] = H[0]
+
         print("output of relu", H)
 
-        y_logit = H[0]
-        y_hat = logit_to_prob(y_logit)
-    assert isinstance(y_hat, np.int64) or isinstance(y_hat, np.float64)
-    return y_hat
+    y_logit = H[0]
+    y_prob = logit_to_prob(y_logit)
+    layers[-1].nodes["y_prob"] = y_prob
+
+
+    assert isinstance(y_prob, np.int64) or isinstance(y_prob, np.float64)
+    return y_prob
 
 def logit_to_prob(y_logit):
     # Well since this neural net is not returning a probability by default, 
@@ -68,13 +89,33 @@ def concat_bias_weights(x):
     num_cols = x.shape[1]
     return np.concatenate([x, np.ones((1, num_cols))])
 
-layers = [
-    Layer(weights=np.random.random((2, 3)), bias=np.array([1])),
-    Layer(weights=np.random.random((3, 2)), bias=np.array([1])), 
-    Layer(weights=np.array([[1], [1]]), bias=np.array([0])), 
-]
 
-# network = layers, all the hidden values and net values , output also , 
+def initialize_network_layers():
+    layers = [
+        Layer(
+            weights=np.random.random((2, 3)), bias=np.array([1]),
+            nodes={
+                "net_h1": None, "h1": None,
+                "net_h2": None, "h2": None,
+                "net_h3": None, "h3": None,
+            }
+        ),
+        Layer(
+            weights=np.random.random((3, 2)), bias=np.array([1]),
+            nodes={
+                "net_h4": None, "h4": None,
+                "net_h5": None, "h5": None,
+            }
+        ), 
+        Layer(weights=np.array([[1], [1]]), bias=np.array([0]),
+            nodes={
+                "net_y_logit": None, "y_logit": None,
+                "y_prob": None,
+            }
+        ), 
+    ]
+    return layers
+
 
 def build_dataset_inside_outside_circle():
     # Create some data in a 20x20 box centered at origin.
@@ -102,13 +143,14 @@ def train_network():
 
             # then update the parameter using the learning rate.
             #   storing in temporary values until later.
+            ...
 
 
         # now finally update the actual parameters.
 
 
 
-def calc_partial_derivative_of_loss_wrt_w13(network):
+def calc_partial_derivative_of_loss_wrt_w13(layers, y):
 
     # net_y = w13*h4 + w14*h5 
     # y_logit = relu(net_y)
@@ -116,16 +158,18 @@ def calc_partial_derivative_of_loss_wrt_w13(network):
     # loss = log_loss(y_actual, y_prob)
 
     # by chain rule, 
-    derivative = pd_log_loss_wrt_prob * pd_prob_wrt_logit * pd_logit_wrt_net_y * pd_net_y_wrt_w13
+    # derivative = pd_log_loss_wrt_prob * pd_prob_wrt_logit * pd_logit_wrt_net_y * pd_net_y_wrt_w13
 
-    y = 
-    y_hat = 
-    y_logit = 
-    y_net = 
-    h4 = 
+    # y = y
+    y_hat = layers[-1].nodes["y_hat"]
+    y_logit = layers[-1].nodes["y_logit"]
+    net_y_logit = layers[-1].nodes["net_y_logit"]   # TODO most likely I should just change the activation function here.
+    h4 = layers[-2].nodes["h4"]
 
-    derivative_of_log_loss(y, y_hat)
-    derivative_of_logit_to_prob_func(y_logit)
-    derivative_of_relu(y_net)
-    h4
+    return (
+        derivative_of_log_loss(y, y_hat)
+        * derivative_of_logit_to_prob_func(y_logit)
+        * derivative_of_relu(net_y_logit)
+        * h4
+    )
 
