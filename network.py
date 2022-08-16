@@ -1,4 +1,5 @@
 import numpy as np
+import ipdb
 from functools import partial
 from sklearn.utils.extmath import softmax
 from sklearn.metrics import log_loss
@@ -87,7 +88,12 @@ def loss(y, y_prob):
 
 def derivative_of_log_loss(y, y_prob):
     # Note, using y_hat and y_prob interchangeably
-    return -y / y_prob - (1 - y) / (1 - y_prob)
+    result = -y / y_prob - (1 - y) / (1 - y_prob)
+
+    if y_prob == 1:
+        ipdb.set_trace()
+
+    return result
 
 
 
