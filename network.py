@@ -151,6 +151,7 @@ def train_network(X, Y, layers):
         # do the feed forward for (x, y) that. 
         y_prob = feed_forward(x, layers, verbose=False)
 
+        # TODO actually oops, if we are recording the loss, want to do it for everything in a validation set. 
         loss_vec.append(loss([y], [y_prob]))
 
         # for parameter in all_parameters:
