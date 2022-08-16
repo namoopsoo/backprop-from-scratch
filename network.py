@@ -3,6 +3,7 @@ from functools import partial
 from sklearn.utils.extmath import softmax
 from sklearn.metrics import log_loss
 from collections import namedtuple
+from tqdm import tqdm
 
 Layer = namedtuple("Layer", ["weights", "bias", "nodes"])
 
@@ -16,14 +17,18 @@ def derivative_of_relu(h_net):
         return 0
 
 
-def feed_forward(x, layers):
+def feed_forward(x, layers, verbose=False):
     values = []
     H = x
     for (i, layer) in enumerate(layers):
-        print(i, layer)
+        if verbose:
+            print(i, layer)
         weights = concat_bias_weights(layer.weights)
         H = np.hstack([H, layer.bias])
-        print("sizes:", H.shape, weights.shape)
+
+        if verbose:
+            print("sizes:", H.shape, weights.shape)
+
         net_H = np.matmul(H, weights)
         H = relu(net_H)
 
@@ -44,7 +49,8 @@ def feed_forward(x, layers):
             layer.nodes["net_y_logit"] = net_H[0]
             layer.nodes["y_logit"] = H[0]
 
-        print("output of relu", H)
+        if verbose:
+            print("output of relu", H)
 
     y_logit = H[0]
     y_prob = logit_to_prob(y_logit)
@@ -75,13 +81,13 @@ def derivative_of_logit_to_prob_func(y_logit):
     return np.exp(y_logit) / ((1 + np.exp(y_logit))**2)
 
 
-def loss(y, y_hat):
-    return log_loss(y, y_hat, labels=[0, 1])
+def loss(y, y_prob):
+    return log_loss(y, y_prob, labels=[0, 1])
 
 
-def derivative_of_log_loss(y, y_hat):
-    # using y_hat and y_prob interchangeably
-    return -y / y_hat - (1 - y) / (1 - y_hat)
+def derivative_of_log_loss(y, y_prob):
+    # Note, using y_hat and y_prob interchangeably
+    return -y / y_prob - (1 - y) / (1 - y_prob)
 
 
 
@@ -107,7 +113,7 @@ def initialize_network_layers():
                 "net_h5": None, "h5": None,
             }
         ), 
-        Layer(weights=np.array([[1], [1]]), bias=np.array([0]),
+        Layer(weights=np.random.random((2, 1)), bias=np.array([0]),
             nodes={
                 "net_y_logit": None, "y_logit": None,
                 "y_prob": None,
@@ -130,27 +136,47 @@ X, Y = build_dataset_inside_outside_circle()
 
 
 
-def train_network():
+def train_network(X, Y, layers):
     # sgd loop
+    learning_rate = 0.5
 
-    # sample minibatch , (x, y), 
-    # do the feed forward for (x, y) that. 
-    for step in range(10):
+    loss_vec = []
 
-        for parameter in all_parameters:
+    num_examples = X.shape[0]
+    for step in tqdm(range(10)):
+        i = np.random.choice(range(num_examples))
+        # sample minibatch , (x, y), 
+        x, y = X[i], Y[i]
 
-            # calculate partial derivative at (x, y)
+        # do the feed forward for (x, y) that. 
+        y_prob = feed_forward(x, layers, verbose=False)
 
-            # then update the parameter using the learning rate.
-            #   storing in temporary values until later.
-            ...
+        loss_vec.append(loss([y], [y_prob]))
+
+        # for parameter in all_parameters:
+
+        # calculate partial derivative at (x, y)
+        pd_loss_wrt_w13 = calc_partial_derivative_of_loss_wrt_w13(layers, y, learning_rate)
+
+        pd_loss_wrt_w14 = calc_partial_derivative_of_loss_wrt_w14(layers, y, learning_rate)
+        # then update the parameter using the learning rate.
+        #   storing in temporary values until later.
+        ...
 
 
         # now finally update the actual parameters.
+        layers[-1] = layers[-1]._replace(
+            weights = layers[-1].weights + np.array(
+                    [
+                        [pd_loss_wrt_w13],
+                        [pd_loss_wrt_w14]])
+                )
+        
+    return loss_vec, layers
 
 
 
-def calc_partial_derivative_of_loss_wrt_w13(layers, y):
+def calc_partial_derivative_of_loss_wrt_w13(layers, y, learning_rate):
 
     # net_y = w13*h4 + w14*h5 
     # y_logit = relu(net_y)
@@ -161,15 +187,44 @@ def calc_partial_derivative_of_loss_wrt_w13(layers, y):
     # derivative = pd_log_loss_wrt_prob * pd_prob_wrt_logit * pd_logit_wrt_net_y * pd_net_y_wrt_w13
 
     # y = y
-    y_hat = layers[-1].nodes["y_hat"]
+    y_prob = layers[-1].nodes["y_prob"]
     y_logit = layers[-1].nodes["y_logit"]
     net_y_logit = layers[-1].nodes["net_y_logit"]   # TODO most likely I should just change the activation function here.
     h4 = layers[-2].nodes["h4"]
 
-    return (
-        derivative_of_log_loss(y, y_hat)
+    g = (
+        derivative_of_log_loss(y, y_prob)
         * derivative_of_logit_to_prob_func(y_logit)
         * derivative_of_relu(net_y_logit)
         * h4
     )
 
+    update = - g * learning_rate
+    return update 
+
+
+def calc_partial_derivative_of_loss_wrt_w14(layers, y, learning_rate):
+
+    # net_y = w13*h4 + w14*h5 
+    # y_logit = relu(net_y)
+    # y_prob = logit_to_prob(y_logit)
+    # loss = log_loss(y_actual, y_prob)
+
+    # by chain rule, 
+    # derivative = pd_log_loss_wrt_prob * pd_prob_wrt_logit * pd_logit_wrt_net_y * pd_net_y_wrt_w14
+
+    # y = y
+    y_prob = layers[-1].nodes["y_prob"]
+    y_logit = layers[-1].nodes["y_logit"]
+    net_y_logit = layers[-1].nodes["net_y_logit"]   # TODO most likely I should just change the activation function here.
+    h5 = layers[-2].nodes["h5"]
+
+    g = (
+        derivative_of_log_loss(y, y_prob)
+        * derivative_of_logit_to_prob_func(y_logit)
+        * derivative_of_relu(net_y_logit)
+        * h5
+    )
+
+    update = - g * learning_rate
+    return update 
