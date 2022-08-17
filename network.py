@@ -87,11 +87,14 @@ def loss(y, y_prob):
 
 
 def derivative_of_log_loss(y, y_prob):
+
     # Note, using y_hat and y_prob interchangeably
     result = -y / y_prob - (1 - y) / (1 - y_prob)
 
     if y_prob == 1:
-        ipdb.set_trace()
+        y_prob -= .00001
+    elif y_prob == 0:
+        y_prob -= .00001
 
     return result
 
