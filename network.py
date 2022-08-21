@@ -5,6 +5,9 @@ from sklearn.utils.extmath import softmax
 from sklearn.metrics import log_loss
 from collections import namedtuple
 from tqdm import tqdm
+from datetime import datetime
+import pytz
+
 
 Layer = namedtuple("Layer", ["weights", "bias", "nodes"])
 
@@ -19,6 +22,7 @@ def derivative_of_relu(h_net):
 
 
 def feed_forward(x, layers, verbose=False):
+    # TODO make this take arbitrary number of inputs, i.e. , vectorize it.
     values = []
     H = x
     for (i, layer) in enumerate(layers):
@@ -33,7 +37,6 @@ def feed_forward(x, layers, verbose=False):
         net_H = np.matmul(H, weights)
         H = relu(net_H)
 
-        # TODO update the layer
         if i == 0:
             layer.nodes["net_h1"] = net_H[0]
             layer.nodes["h1"] = H[0]
@@ -82,8 +85,23 @@ def derivative_of_logit_to_prob_func(y_logit):
     return np.exp(y_logit) / ((1 + np.exp(y_logit))**2)
 
 
-def loss(y, y_prob):
-    return log_loss(y, y_prob, labels=[0, 1])
+def loss(layers, X, Y):
+    """Given the MLP and the dataset, find the loss.
+
+    Args:
+        layers: MLP layers
+        X, Y: the dataset
+    """
+
+    Y_actual = []
+    for i in tqdm(range(X.shape[0])):
+        y = feed_forward(X[i], layers)
+        Y_actual.append(y)
+
+    Y_actual = np.array(Y_actual)
+
+    total_loss = log_loss(Y, Y_actual, labels=[0, 1])
+    return Y_actual, total_loss
 
 
 def derivative_of_log_loss(y, y_prob):
@@ -140,20 +158,18 @@ def build_dataset_inside_outside_circle():
     f = (lambda a: int(np.sqrt(a[0]**2 + a[1]**2) <= radius))
     Y = np.array(list(map(f, X)))
     return X, Y
-X, Y = build_dataset_inside_outside_circle() 
 
 
 
 
-
-def train_network(X, Y, layers):
+def train_network(X, Y, layers, log_loss_each_round=False):
     # sgd loop
     learning_rate = 0.5
 
     loss_vec = []
 
     num_examples = X.shape[0]
-    for step in tqdm(range(10)):
+    for step in tqdm(range(60)):
         i = np.random.choice(range(num_examples))
         # sample minibatch , (x, y), 
         x, y = X[i], Y[i]
@@ -162,7 +178,9 @@ def train_network(X, Y, layers):
         y_prob = feed_forward(x, layers, verbose=False)
 
         # TODO actually oops, if we are recording the loss, want to do it for everything in a validation set. 
-        loss_vec.append(loss([y], [y_prob]))
+        if log_loss_each_round:
+            _, total_loss = loss(layers, X, Y)
+            loss_vec.append(total_loss)
 
         # for parameter in all_parameters:
 
@@ -183,7 +201,15 @@ def train_network(X, Y, layers):
                         [pd_loss_wrt_w14]])
                 )
         
+    _, total_loss = loss(layers, X, Y)
+    loss_vec.append(total_loss)
     return loss_vec, layers
+
+
+def utc_now():
+    return datetime.utcnow().replace(tzinfo=pytz.UTC)
+def utc_ts(dt):
+    return dt.strftime("%Y-%m-%dT%H%M%S")
 
 
 
