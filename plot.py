@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 import numpy as np
 
+from utils import utc_now, utc_ts
+
+
 def plot_loss_vec(loss_vec):
     with plt.style.context("fivethirtyeight"):
         plt.plot(loss_vec)
@@ -100,9 +103,9 @@ def scatter_plot_groups(X, Y):
     groups = ("0", "1")
 
     fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1, axisbg="1.0")
+    ax = fig.add_subplot(1, 1, 1) # , axisbg="1.0")
     for data, color, group in zip(data, colors, groups):
-        x, y = data
+        x, y = data[:, 0], data[:, 1]
         ax.scatter(x, y, alpha=0.8, c=color, edgecolors="none", s=30, label=group)
 
     plt.title("0s and 1s")

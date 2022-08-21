@@ -5,9 +5,8 @@ from sklearn.utils.extmath import softmax
 from sklearn.metrics import log_loss
 from collections import namedtuple
 from tqdm import tqdm
-from datetime import datetime
-import pytz
 
+from utils import utc_now, utc_ts
 
 Layer = namedtuple("Layer", ["weights", "bias", "nodes"])
 
@@ -204,13 +203,6 @@ def train_network(X, Y, layers, log_loss_each_round=False):
     _, total_loss = loss(layers, X, Y)
     loss_vec.append(total_loss)
     return loss_vec, layers
-
-
-def utc_now():
-    return datetime.utcnow().replace(tzinfo=pytz.UTC)
-def utc_ts(dt):
-    return dt.strftime("%Y-%m-%dT%H%M%S")
-
 
 
 def calc_partial_derivative_of_loss_wrt_w13(layers, y, learning_rate):
