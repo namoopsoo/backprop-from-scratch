@@ -5,6 +5,11 @@ import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 import numpy as np
 
+
+# pip install colormap
+# pip install easydev
+from colormap import rgb2hex, rgb2hls, hls2rgb
+
 from utils import utc_now, utc_ts
 
 
@@ -94,7 +99,14 @@ def plot_type3(x, y, z, how_many=None):
 
 
 def scatter_plot_groups(X, Y):
+    """
+    Args:
+        X: (x, y) coordinates
+        Y: Here, just expect Y has only 0s and 1s. 
+
     # reference, https://pythonspot.com/matplotlib-scatterplot/
+    """
+
 
     indexes_0 = [i for (i, y) in enumerate(Y) if y == 0]
     indexes_1 = [i for (i, y) in enumerate(Y) if y == 1]
@@ -111,9 +123,52 @@ def scatter_plot_groups(X, Y):
     plt.title("0s and 1s")
     plt.legend(loc=2)
 
-
     out_loc = f"{utc_ts(utc_now())}-scatter.png"
     print("saving to", out_loc)
     pylab.savefig(out_loc, bbox_inches="tight")
     pylab.close()
 
+def scatter_plot_by_z(X, Y):
+    """
+    Args:
+        X: (x, y) coordinates
+        Y: float from 0 to 1
+    """
+    # expecting that 
+    x, y = X[:, 0], X[:, 1]
+    colors = map_values_to_colors(Y)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1) # , axisbg="1.0")
+    ax.scatter(x, y, alpha=0.8, c=colors, edgecolors="none", s=10)
+    out_loc = f"{utc_ts(utc_now())}-scatter.png"
+    print("saving to", out_loc)
+    pylab.savefig(out_loc, bbox_inches="tight")
+    pylab.close()
+
+
+def map_values_to_colors(Y):
+
+    # base color is a light green
+    r, g, b = 0, 253, 150
+
+    colors = [
+        darken_color(r, g, b, factor=y)
+        for y in Y
+    ]
+    return colors
+
+
+def hex_to_rgb(hex):
+     hex = hex.lstrip('#')
+     hlen = len(hex)
+     return tuple(int(hex[i:i+hlen//3], 16) for i in range(0, hlen, hlen//3))
+
+def adjust_color_lightness(r, g, b, factor):
+    h, l, s = rgb2hls(r / 255.0, g / 255.0, b / 255.0)
+    l = max(min(l * factor, 1.0), 0.0)
+    r, g, b = hls2rgb(h, l, s)
+    return rgb2hex(int(r * 255), int(g * 255), int(b * 255))
+
+def darken_color(r, g, b, factor=0.1):
+    return adjust_color_lightness(r, g, b, 1 - factor)
