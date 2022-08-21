@@ -21,13 +21,14 @@ def surface_plot_type1(x, y, z, how_many=None):
     # reference:  https://www.geeksforgeeks.org/3d-surface-plotting-in-python-using-matplotlib/
     if how_many is None:
         how_many = x.shape[0]
+    x = x[:how_many]
+    y = y[:how_many]
+    z = z[:how_many]
+
     # Creating figure
     fig = plt.figure(figsize =(14, 9))
     ax = plt.axes(projection ='3d')
 
-    x = X[:how_many, 0]
-    y = X[:how_many, 1]
-    z = np.reshape(Y[:how_many], (how_many, 1))
     # Creating plot
     ax.plot_surface(x, y, z)
     out_loc = f"{n.utc_ts(n.utc_now())}-surface.png"
@@ -39,10 +40,10 @@ def plot_type3(x, y, z, how_many=None):
 
     if how_many is None:
         how_many = x.shape[0]
-    # Creating dataset
-    # x = np.outer(np.linspace(-3, 3, 32), np.ones(32))
-    # y = x.copy().T # transpose
-    # z = (np.sin(x **2) + np.cos(y **2) )
+
+    x = x[:how_many]
+    y = y[:how_many]
+    z = z[:how_many]
 
     # Creating figure
     fig = plt.figure(figsize =(14, 9))
@@ -86,3 +87,30 @@ def plot_type3(x, y, z, how_many=None):
     print("saving to", out_loc)
     pylab.savefig(out_loc, bbox_inches="tight")
     pylab.close()
+
+
+
+def scatter_plot_groups(X, Y):
+    # reference, https://pythonspot.com/matplotlib-scatterplot/
+
+    indexes_0 = [i for (i, y) in enumerate(Y) if y == 0]
+    indexes_1 = [i for (i, y) in enumerate(Y) if y == 1]
+    data = (X[indexes_0, :], X[indexes_1, :])
+    colors = ("red", "blue")
+    groups = ("0", "1")
+
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1, axisbg="1.0")
+    for data, color, group in zip(data, colors, groups):
+        x, y = data
+        ax.scatter(x, y, alpha=0.8, c=color, edgecolors="none", s=30, label=group)
+
+    plt.title("0s and 1s")
+    plt.legend(loc=2)
+
+
+    out_loc = f"{utc_ts(utc_now())}-scatter.png"
+    print("saving to", out_loc)
+    pylab.savefig(out_loc, bbox_inches="tight")
+    pylab.close()
+
