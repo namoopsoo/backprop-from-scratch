@@ -59,6 +59,9 @@ def feed_forward(x, layers, verbose=False):
 
 
     assert isinstance(y_prob, np.int64) or isinstance(y_prob, np.float64)
+
+    if np.isnan(y_prob):
+        import ipdb; ipdb.set_trace()
     return y_prob
 
 def logit_to_prob(y_logit):
@@ -72,10 +75,7 @@ def logit_to_prob(y_logit):
     #       prob = odds / (1 + odds)
     # 
     # Hmm thing is I can't use softmax since I only have a single output logit.
-
-    odds = np.exp(y_logit)
-    prob = odds / (1 + odds)
-    return prob
+    return 1 / (1 + np.exp(-y_logit))
 
 
 def derivative_of_logit_to_prob_func(y_logit):
@@ -89,12 +89,13 @@ def loss(y, y_prob):
 def derivative_of_log_loss(y, y_prob):
 
     # Note, using y_hat and y_prob interchangeably
-    result = -y / y_prob - (1 - y) / (1 - y_prob)
 
     if y_prob == 1:
         y_prob -= .00001
     elif y_prob == 0:
         y_prob -= .00001
+
+    result = -y / y_prob - (1 - y) / (1 - y_prob)
 
     return result
 
