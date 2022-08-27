@@ -1,5 +1,4 @@
 import numpy as np
-import ipdb
 from functools import partial
 from sklearn.utils.extmath import softmax
 from sklearn.metrics import log_loss
@@ -67,15 +66,15 @@ def feed_forward(x, layers, verbose=False):
     return y_prob
 
 def logit_to_prob(y_logit):  # aka sigmoid
-    # Well since this neural net is not returning a probability by default, 
-    #   then we need something like softmax to do that. 
-    #   Also this person , https://sebastiansauer.github.io/convert_logit2prob/ , 
-    #   notes another possible option is 
+    # Well since this neural net is not returning a probability by default,
+    #   then we need something like softmax to do that.
+    #   Also this person , https://sebastiansauer.github.io/convert_logit2prob/ ,
+    #   notes another possible option is
     #
-    #   given a logit, 
+    #   given a logit,
     #       odds = exp(logit)
     #       prob = odds / (1 + odds)
-    # 
+    #
     # Hmm thing is I can't use softmax since I only have a single output logit.
     # so just using sigmoid..
     return 1 / (1 + np.exp(-y_logit))
@@ -140,13 +139,13 @@ def initialize_network_layers():
                 "net_h4": None, "h4": None,
                 "net_h5": None, "h5": None,
             }
-        ), 
+        ),
         Layer(weights=np.random.random((2, 1)), bias=np.array([0]),
             nodes={
                 "net_y_logit": None, "y_logit": None,
                 "y_prob": None,
             }
-        ), 
+        ),
     ]
     return layers
 
@@ -171,13 +170,13 @@ def train_network(X, Y, layers, log_loss_each_round=False):
     num_examples = X.shape[0]
     for step in tqdm(range(60)):
         i = np.random.choice(range(num_examples))
-        # sample minibatch , (x, y), 
+        # sample minibatch , (x, y),
         x, y = X[i], Y[i]
 
-        # do the feed forward for (x, y) that. 
+        # do the feed forward for (x, y) that.
         y_prob = feed_forward(x, layers, verbose=False)
 
-        # TODO actually oops, if we are recording the loss, want to do it for everything in a validation set. 
+        # TODO actually oops, if we are recording the loss, want to do it for everything in a validation set.
         if log_loss_each_round:
             _, total_loss = loss(layers, X, Y)
             loss_vec.append(total_loss)
@@ -200,7 +199,7 @@ def train_network(X, Y, layers, log_loss_each_round=False):
                         [-1 * pd_loss_wrt_w14 * learning_rate]])
                 )
 
-        # next, 
+        # next,
         pd_loss_wrt_the_layer_1_weights = (
             calc_partial_derivative_of_loss_wrt_w_on_layer_1(
                 layers, pd_loss_wrt_w13, pd_loss_wrt_w14,
@@ -243,24 +242,23 @@ def train_network(X, Y, layers, log_loss_each_round=False):
 
 
 
-        
     _, total_loss = loss(layers, X, Y)
     loss_vec.append(total_loss)
     return loss_vec, layers
 
 def calc_partial_derivative_of_loss_wrt_w_on_layer_1(
-    layers, 
-    pd_loss_wrt_w13, 
-    pd_loss_wrt_w14, 
+    layers,
+    pd_loss_wrt_w13,
+    pd_loss_wrt_w14,
 ):
-    # so layer 1 weights are w7, w9, w11, w8, w10, w12, 
+    # so layer 1 weights are w7, w9, w11, w8, w10, w12,
     h1 = layers[0].nodes["h1"]
     h2 = layers[0].nodes["h2"]
     h3 = layers[0].nodes["h3"]
     net_h4 = layers[1].nodes["net_h4"]
     net_h5 = layers[1].nodes["net_h5"]
     pd_loss_wrt_weights = {
-        # for h4 weights, 
+        # for h4 weights,
         "w7": (pd_loss_wrt_w13
             * derivative_of_relu(net_h4)
             * h1),
@@ -271,7 +269,7 @@ def calc_partial_derivative_of_loss_wrt_w_on_layer_1(
             * derivative_of_relu(net_h4)
             * h3),
 
-        # for h5 weights, 
+        # for h5 weights,
         "w8": (pd_loss_wrt_w14
             * derivative_of_relu(net_h5)
             * h1),
@@ -293,7 +291,7 @@ def calc_partial_derivative_of_loss_wrt_w_on_layer_0(
             layers[0].nodes["net_h2"],
             layers[0].nodes["net_h3"],
             )
-    # x1, x2 = (layers xxx .... ) # TODO 
+    # x1, x2 = (layers xxx .... ) # TODO
     pd_loss_wrt_weights = {
         "w1": ((pd_loss_wrt_the_layer_1_weights["w7"]
                 + pd_loss_wrt_the_layer_1_weights["w8"])
@@ -321,16 +319,17 @@ def calc_partial_derivative_of_loss_wrt_w_on_layer_0(
             * derivative_of_relu(net_h3)
             * x2),
     }
+    return pd_loss_wrt_weights
 
 
 def calc_partial_derivative_of_loss_wrt_w13(layers, y, ):
 
-    # net_y = w13*h4 + w14*h5 
+    # net_y = w13*h4 + w14*h5
     # y_logit = relu(net_y)
     # y_prob = logit_to_prob(y_logit)
     # loss = log_loss(y_actual, y_prob)
 
-    # by chain rule, 
+    # by chain rule,
     # derivative = pd_log_loss_wrt_prob * pd_prob_wrt_logit * pd_logit_wrt_net_y * pd_net_y_wrt_w13
 
     # y = y
@@ -350,12 +349,12 @@ def calc_partial_derivative_of_loss_wrt_w13(layers, y, ):
 
 def calc_partial_derivative_of_loss_wrt_w14(layers, y, ):
 
-    # net_y = w13*h4 + w14*h5 
+    # net_y = w13*h4 + w14*h5
     # y_logit = relu(net_y)
     # y_prob = logit_to_prob(y_logit)
     # loss = log_loss(y_actual, y_prob)
 
-    # by chain rule, 
+    # by chain rule,
     # derivative = pd_log_loss_wrt_prob * pd_prob_wrt_logit * pd_logit_wrt_net_y * pd_net_y_wrt_w14
 
     # y = y
