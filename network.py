@@ -185,21 +185,40 @@ def train_network(X, Y, layers, log_loss_each_round=False):
         # for parameter in all_parameters:
 
         # calculate partial derivative at (x, y)
-        pd_loss_wrt_w13 = calc_partial_derivative_of_loss_wrt_w13(layers, y, learning_rate)
+        pd_loss_wrt_w13 = calc_partial_derivative_of_loss_wrt_w13(layers, y, )
 
-        pd_loss_wrt_w14 = calc_partial_derivative_of_loss_wrt_w14(layers, y, learning_rate)
+        pd_loss_wrt_w14 = calc_partial_derivative_of_loss_wrt_w14(layers, y, )
         # then update the parameter using the learning rate.
         #   storing in temporary values until later.
-        ...
 
 
         # now finally update the actual parameters.
         layers[-1] = layers[-1]._replace(
-            weights = layers[-1].weights + np.array(
+            weights=layers[-1].weights + np.array(
                     [
-                        [pd_loss_wrt_w13],
-                        [pd_loss_wrt_w14]])
+                        [-1 * pd_loss_wrt_w13 * learning_rate],
+                        [-1 * pd_loss_wrt_w14 * learning_rate]])
                 )
+
+        # next, 
+        pd_loss_wrt_the_layer_1_weights = (
+            calc_partial_derivative_of_loss_wrt_w_on_layer_1(
+                layers, pd_loss_wrt_w13, pd_loss_wrt_w14,
+            ))
+        layers[1] = layers[1]._replace(
+            weights=layers[1].weights + np.array(
+                [
+                    [pd_loss_wrt_the_layer_1_weights["w7"],
+                        pd_loss_wrt_the_layer_1_weights["w8"], ],
+                    [pd_loss_wrt_the_layer_1_weights["w9"],
+                        pd_loss_wrt_the_layer_1_weights["w10"], ],
+                    [pd_loss_wrt_the_layer_1_weights["w11"],
+                        pd_loss_wrt_the_layer_1_weights["w12"], ],
+                ]))
+
+
+
+
         
     _, total_loss = loss(layers, X, Y)
     loss_vec.append(total_loss)
@@ -211,6 +230,11 @@ def calc_partial_derivative_of_loss_wrt_w_on_layer_1(
     pd_loss_wrt_w14, 
 ):
     # so layer 1 weights are w7, w9, w11, w8, w10, w12, 
+    h1 = layers[0].nodes["h1"]
+    h2 = layers[0].nodes["h2"]
+    h3 = layers[0].nodes["h3"]
+    net_h4 = layers[1].nodes["net_h4"]
+    net_h5 = layers[1].nodes["net_h5"]
     pd_loss_wrt_weights = {
         # for h4 weights, 
         "w7": (pd_loss_wrt_w13
@@ -236,7 +260,7 @@ def calc_partial_derivative_of_loss_wrt_w_on_layer_1(
     }
 
 
-def calc_partial_derivative_of_loss_wrt_w13(layers, y, learning_rate):
+def calc_partial_derivative_of_loss_wrt_w13(layers, y, ):
 
     # net_y = w13*h4 + w14*h5 
     # y_logit = relu(net_y)
@@ -258,12 +282,10 @@ def calc_partial_derivative_of_loss_wrt_w13(layers, y, learning_rate):
         * derivative_of_relu(net_y_logit)
         * h4
     )
-
-    update = - g * learning_rate
-    return update 
+    return g
 
 
-def calc_partial_derivative_of_loss_wrt_w14(layers, y, learning_rate):
+def calc_partial_derivative_of_loss_wrt_w14(layers, y, ):
 
     # net_y = w13*h4 + w14*h5 
     # y_logit = relu(net_y)
@@ -285,6 +307,4 @@ def calc_partial_derivative_of_loss_wrt_w14(layers, y, learning_rate):
         * derivative_of_relu(net_y_logit)
         * h5
     )
-
-    update = - g * learning_rate
-    return update 
+    return g
