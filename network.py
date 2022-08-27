@@ -56,7 +56,7 @@ def feed_forward(x, layers, verbose=False):
             print("output of relu", H)
 
     y_logit = H[0]
-    y_prob = logit_to_prob(y_logit)
+    y_prob = logit_to_prob(y_logit) # aka sigmoid
     layers[-1].nodes["y_prob"] = y_prob
 
 
@@ -66,7 +66,7 @@ def feed_forward(x, layers, verbose=False):
         import ipdb; ipdb.set_trace()
     return y_prob
 
-def logit_to_prob(y_logit):
+def logit_to_prob(y_logit):  # aka sigmoid
     # Well since this neural net is not returning a probability by default, 
     #   then we need something like softmax to do that. 
     #   Also this person , https://sebastiansauer.github.io/convert_logit2prob/ , 
@@ -77,6 +77,7 @@ def logit_to_prob(y_logit):
     #       prob = odds / (1 + odds)
     # 
     # Hmm thing is I can't use softmax since I only have a single output logit.
+    # so just using sigmoid..
     return 1 / (1 + np.exp(-y_logit))
 
 
@@ -203,6 +204,36 @@ def train_network(X, Y, layers, log_loss_each_round=False):
     _, total_loss = loss(layers, X, Y)
     loss_vec.append(total_loss)
     return loss_vec, layers
+
+def calc_partial_derivative_of_loss_wrt_w_on_layer_1(
+    layers, 
+    pd_loss_wrt_w13, 
+    pd_loss_wrt_w14, 
+):
+    # so layer 1 weights are w7, w9, w11, w8, w10, w12, 
+    pd_loss_wrt_weights = {
+        # for h4 weights, 
+        "w7": (pd_loss_wrt_w13
+            * derivative_of_relu(net_h4)
+            * h1),
+        "w9": (pd_loss_wrt_w13
+            * derivative_of_relu(net_h4)
+            * h2),
+        "w11": (pd_loss_wrt_w13
+            * derivative_of_relu(net_h4)
+            * h3),
+
+        # for h5 weights, 
+        "w8": (pd_loss_wrt_w14
+            * derivative_of_relu(net_h5)
+            * h1),
+        "w10": (pd_loss_wrt_w14
+            * derivative_of_relu(net_h5)
+            * h2),
+        "w12": (pd_loss_wrt_w14
+            * derivative_of_relu(net_h5)
+            * h3),
+    }
 
 
 def calc_partial_derivative_of_loss_wrt_w13(layers, y, learning_rate):
