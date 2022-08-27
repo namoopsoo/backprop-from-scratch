@@ -216,6 +216,30 @@ def train_network(X, Y, layers, log_loss_each_round=False):
                         pd_loss_wrt_the_layer_1_weights["w12"], ],
                 ]))
 
+        # and layer 0 too
+        x1, x2 = x[0], x[1]
+        pd_loss_wrt_the_layer_0_weights = (
+            calc_partial_derivative_of_loss_wrt_w_on_layer_0(
+                layers,
+                pd_loss_wrt_the_layer_1_weights,
+                x1, x2,))
+
+        layers[0] = layers[0]._replace(
+            weights=layers[0].weights + np.array(
+                [
+                    [
+                        pd_loss_wrt_the_layer_0_weights["w1"],
+                        pd_loss_wrt_the_layer_0_weights["w2"],
+                        pd_loss_wrt_the_layer_0_weights["w3"],
+                        ],
+                    [
+                        pd_loss_wrt_the_layer_0_weights["w4"],
+                        pd_loss_wrt_the_layer_0_weights["w5"],
+                        pd_loss_wrt_the_layer_0_weights["w6"],
+                        ],
+                ]
+            )
+        )
 
 
 
@@ -257,6 +281,45 @@ def calc_partial_derivative_of_loss_wrt_w_on_layer_1(
         "w12": (pd_loss_wrt_w14
             * derivative_of_relu(net_h5)
             * h3),
+    }
+    return pd_loss_wrt_weights
+
+def calc_partial_derivative_of_loss_wrt_w_on_layer_0(
+    layers,
+    pd_loss_wrt_the_layer_1_weights,
+    x1, x2,
+):
+    net_h1, net_h2, net_h3 = (layers[0].nodes["net_h1"],
+            layers[0].nodes["net_h2"],
+            layers[0].nodes["net_h3"],
+            )
+    # x1, x2 = (layers xxx .... ) # TODO 
+    pd_loss_wrt_weights = {
+        "w1": ((pd_loss_wrt_the_layer_1_weights["w7"]
+                + pd_loss_wrt_the_layer_1_weights["w8"])
+            * derivative_of_relu(net_h1)
+            * x1),
+        "w2": ((pd_loss_wrt_the_layer_1_weights["w9"]
+                + pd_loss_wrt_the_layer_1_weights["w10"])
+            * derivative_of_relu(net_h2)
+            * x1),
+        "w3": ((pd_loss_wrt_the_layer_1_weights["w11"]
+                + pd_loss_wrt_the_layer_1_weights["w12"])
+            * derivative_of_relu(net_h3)
+            * x1),
+
+        "w4": ((pd_loss_wrt_the_layer_1_weights["w7"]
+                + pd_loss_wrt_the_layer_1_weights["w8"])
+            * derivative_of_relu(net_h1)
+            * x2),
+        "w5": ((pd_loss_wrt_the_layer_1_weights["w9"]
+                + pd_loss_wrt_the_layer_1_weights["w10"])
+            * derivative_of_relu(net_h2)
+            * x2),
+        "w6": ((pd_loss_wrt_the_layer_1_weights["w11"]
+                + pd_loss_wrt_the_layer_1_weights["w12"])
+            * derivative_of_relu(net_h3)
+            * x2),
     }
 
 
