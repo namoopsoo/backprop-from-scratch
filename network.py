@@ -3,6 +3,7 @@ from functools import partial
 from sklearn.utils.extmath import softmax
 from sklearn.metrics import log_loss
 from collections import namedtuple
+from copy import deepcopy
 from tqdm import tqdm
 
 from utils import utc_now, utc_ts
@@ -161,14 +162,16 @@ def build_dataset_inside_outside_circle():
 
 
 
-def train_network(X, Y, layers, log_loss_each_round=False):
+def train_network(X, Y, layers, log_loss_each_round=False, steps=60):
     # sgd loop
     learning_rate = 0.5
+
+    artifacts = {}
 
     loss_vec = []
 
     num_examples = X.shape[0]
-    for step in tqdm(range(60)):
+    for step in tqdm(range(steps)):
         i = np.random.choice(range(num_examples))
         # sample minibatch , (x, y),
         x, y = X[i], Y[i]
@@ -180,6 +183,7 @@ def train_network(X, Y, layers, log_loss_each_round=False):
         if log_loss_each_round:
             _, total_loss = loss(layers, X, Y)
             loss_vec.append(total_loss)
+            artifacts[str(step)] = {"model": deepcopy(layers), "log_loss": total_loss}
 
         # for parameter in all_parameters:
 
@@ -244,7 +248,7 @@ def train_network(X, Y, layers, log_loss_each_round=False):
 
     _, total_loss = loss(layers, X, Y)
     loss_vec.append(total_loss)
-    return loss_vec, layers
+    return loss_vec, layers, artifacts
 
 def calc_partial_derivative_of_loss_wrt_w_on_layer_1(
     layers,
