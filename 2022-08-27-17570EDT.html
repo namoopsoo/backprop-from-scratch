@@ -1,0 +1,95 @@
+<!-- directives: [] -->
+<div id="content">
+  <ul>
+    <li><a class="tag">[[my back prop SGD from scratch 2022-Aug]]</a>
+      <ul>
+        <li>yayay</li>
+        <li>12:38 so what happened last time? well let me look at the 2022-08-21.html notes I created.
+          <ul>
+            <li>13:20 darn so ok spent bunch of time figuring out why I couldnt view all the images in that html but basically combination of the html references images in log seq dir and also I have to copy  them to my git repo area for this repo. Anyway,</li>
+            <li>13:35 finally looking, so the weird issue was my log loss was getting worse with training when only affecting the final layer , so then I plotted the  raw input data with a 3d surface plot but it was really weird looking and shapeless . I plotted this on a 2d plot instead and yea looked reasonable. But yea the 95% label=0 to to 5% label=1 maybe was contributing to why the 3d surface plot looked formless and uninteresting. And for fun I tweaked my 2d plotting code to use a spectrum of colors so I can perhaps look at my output data. But then oh wow oops I realized all the predictions were basically just 0.5 . So my main thought then was that haha probably training just the last layer of a network is basically not useful.</li>
+          </ul>
+        </li>
+
+        <li>13:44 ok so let me continue with a strategy to train the full network and not just the final layer ,
+          <ul>
+            <li>look back at my network,</li>
+            <li><b>13:48</b> quick capture: <img src="assets/Untitled%202.png" title="Untitled%202" width="40%" /></li>
+            <li>Just going to write up the partial derivative parts of the gradient one at a time,
+              <ul>
+                <li><img src="assets/2022-08-27-14-34-53.jpeg" title="2022-08-27-14-34-53.jpeg" width="40%"/></li>
+                <li><img src="assets/2022-08-27-15-42-39.jpeg" title="2022-08-27-15-42-39.jpeg" width="40%"/></li>
+              </ul>
+            </li>
+            <li>16:53 ok I have added this to the code now . let me try that train loop again then
+              <pre><code data-lang="python" class="python">			  import network as n
+			  import plot
+			  
+			  X, Y = n.build_dataset_inside_outside_circle()
+			  layers = n.initialize_network_layers()
+			  loss_vec, layers = n.train_network(X, Y, layers)
+			  
+			  plot.plot_loss_vec(loss_vec)
+
+</code></pre>
+
+              <p>			  
+                <br />
+			  <img src="assets/2022-08-27T211116_1661634782044_0.png" title="2022-08-27T211116.png" />
+                <br />
+</p>
+            </li>
+            <li>17:12 ok output above is pretty interesting. Probably if indeed things are working, the learning rate is too high. But haha in case something is actually working, let me actually try plotting the predictions for the loss after the first round which I think looks lowest.
+              <p>			  
+                <br />
+</p>
+
+              <pre><code data-lang="python" class="python">			  layers = n.initialize_network_layers()
+			  loss_vec, layers, artifacts = n.train_network(X, Y, layers, log_loss_each_round=True, steps=10)
+			  
+			  layers = artifacts[&quot;9&quot;][&quot;model&quot;]
+			  Y_actual, total_loss = n.loss(layers, X, Y)
+
+</code></pre>
+
+              <p>			  
+                <br />
+			  <img src="assets/2022-08-27T212719_1661636200052_0.png" title="2022-08-27T212719.png" />
+                <br />
+			  
+                <br />
+			  
+                <br />
+</p>
+
+              <pre><code data-lang="python" class="python">			  layers = artifacts[&quot;9&quot;][&quot;model&quot;]
+			  Y_actual, total_loss = n.loss(layers, X, Y)
+			  plot.scatter_plot_by_z(X, Y_actual)
+
+</code></pre>
+
+              <p>			  <img src="assets/2022-08-27T213455-scatter_1661636207913_0.png" title="2022-08-27T213455-scatter.png" />
+                <br />
+</p>
+            </li>
+            <li>17:39 ok haha that&apos;s kind of confusing. Not sure why the second time around, pretty sure I did not re-generate the data, the loss on this training round went down and stayed down. Likely the first time around we must have jumped too far from the minimum irrecoverably. And the second time, since indeed the weights are generated randomly, we stayed close.</li>
+            <li>But also for the second round, when plotting some outputs, clearly we see something funky is going on. And also I suspect that since I have not fixed that whole 95% to 5% dataset imbalance, some funkiness is happening and indeed the loss does appear to be small because the penalty on the imbalanced dataset is not shining through.</li>
+            <li>17:47  So the imbalanced dataset is likely messing with learning and also with the perception of the loss as well.</li>
+            <li></li>
+            <li></li>
+            <li></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+    <li>16:03 also I learned the plant in the office is called the swiss cheese plant
+      <ul>
+        <li><a href="https:www.plantindex.com/swiss-cheese-plant/">https://www.plantindex.com/swiss-cheese-plant/</a></li>
+        <li><img src="assets/image_1661630670633_0.png" title="image.png" /></li>
+      </ul>
+    </li>
+    <li>hmm</li>
+  </ul>
+</div>
+
+
