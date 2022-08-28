@@ -59,10 +59,10 @@ def feed_forward(x, layers, verbose=False):
     y_prob = logit_to_prob(y_logit) # aka sigmoid
     layers[-1].nodes["y_prob"] = y_prob
 
-
     assert isinstance(y_prob, np.int64) or isinstance(y_prob, np.float64)
 
     if np.isnan(y_prob):
+        print("oops!")
         import ipdb; ipdb.set_trace()
     return y_prob
 
@@ -94,7 +94,7 @@ def loss(layers, X, Y):
     """
 
     Y_actual = []
-    for i in tqdm(range(X.shape[0])):
+    for i in tqdm(range(X.shape[0]), desc=" inner", position=1, leave=False):
         y = feed_forward(X[i], layers)
         Y_actual.append(y)
 
@@ -151,9 +151,7 @@ def initialize_network_layers():
     return layers
 
 
-
-
-def train_network(X, Y, layers, log_loss_each_round=False, steps=60):
+def train_network(X, Y, layers, log_loss_every_k_steps=10, steps=60):
     # sgd loop
     learning_rate = 0.5
 
@@ -162,21 +160,17 @@ def train_network(X, Y, layers, log_loss_each_round=False, steps=60):
     loss_vec = []
 
     num_examples = X.shape[0]
-    for step in tqdm(range(steps)):
+    for step in tqdm(range(steps), desc=" outer", position=0):
         i = np.random.choice(range(num_examples))
         # sample minibatch , (x, y),
         x, y = X[i], Y[i]
 
-        # do the feed forward for (x, y) that.
         y_prob = feed_forward(x, layers, verbose=False)
 
-        # TODO actually oops, if we are recording the loss, want to do it for everything in a validation set.
-        if log_loss_each_round:
+        if step % log_loss_every_k_steps == 0:
             _, total_loss = loss(layers, X, Y)
             loss_vec.append(total_loss)
             artifacts[str(step)] = {"model": deepcopy(layers), "log_loss": total_loss}
-
-        # for parameter in all_parameters:
 
         # calculate partial derivative at (x, y)
         pd_loss_wrt_w13 = calc_partial_derivative_of_loss_wrt_w13(layers, y, )
