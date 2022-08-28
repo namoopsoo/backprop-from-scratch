@@ -2,6 +2,7 @@ import numpy as np
 from functools import partial
 from sklearn.utils.extmath import softmax
 from sklearn.metrics import log_loss
+from sklearn.model_selection import train_test_split
 from collections import namedtuple
 from copy import deepcopy
 from tqdm import tqdm
@@ -9,6 +10,7 @@ from tqdm import tqdm
 from utils import utc_now, utc_ts
 
 Layer = namedtuple("Layer", ["weights", "bias", "nodes"])
+Model = namedtuple("Model", ["layers", "parameters"])
 
 relu_scalar = partial(max, 0)
 relu = np.vectorize(relu_scalar)
@@ -151,38 +153,49 @@ def initialize_network_layers():
     return layers
 
 
-def train_network(X, Y, layers, log_loss_every_k_steps=10, steps=60):
+def initialize_model(parameters):
+    model = Model(
+        layers=initialize_network_layers(),
+        parameters=parameters,
+    )
+    return model
+
+
+def train_network(X, Y, model, log_loss_every_k_steps=10, steps=60):
     # sgd loop
-    learning_rate = 0.5
+    learning_rate = model.parameters["learning_rate"]
+
+    X_train, X_validation, Y_train, Y_validation = train_test_split(
+        X, Y, test_size=0.1, random_state=42)
 
     artifacts = {}
 
     loss_vec = []
 
-    num_examples = X.shape[0]
+    num_examples = X_train.shape[0]
     for step in tqdm(range(steps), desc=" outer", position=0):
         i = np.random.choice(range(num_examples))
         # sample minibatch , (x, y),
-        x, y = X[i], Y[i]
+        x, y = X_train[i], Y_train[i]
 
-        y_prob = feed_forward(x, layers, verbose=False)
+        y_prob = feed_forward(x, model.layers, verbose=False)
 
         if step % log_loss_every_k_steps == 0:
-            _, total_loss = loss(layers, X, Y)
+            _, total_loss = loss(model.layers, X_validation, Y_validation)
             loss_vec.append(total_loss)
-            artifacts[str(step)] = {"model": deepcopy(layers), "log_loss": total_loss}
+            artifacts[str(step)] = {"model": deepcopy(model), "log_loss": total_loss}
 
         # calculate partial derivative at (x, y)
-        pd_loss_wrt_w13 = calc_partial_derivative_of_loss_wrt_w13(layers, y, )
+        pd_loss_wrt_w13 = calc_partial_derivative_of_loss_wrt_w13(model.layers, y, )
 
-        pd_loss_wrt_w14 = calc_partial_derivative_of_loss_wrt_w14(layers, y, )
+        pd_loss_wrt_w14 = calc_partial_derivative_of_loss_wrt_w14(model.layers, y, )
         # then update the parameter using the learning rate.
         #   storing in temporary values until later.
 
 
         # now finally update the actual parameters.
-        layers[-1] = layers[-1]._replace(
-            weights=layers[-1].weights + np.array(
+        model.layers[-1] = model.layers[-1]._replace(
+            weights=model.layers[-1].weights + np.array(
                     [
                         [-1 * pd_loss_wrt_w13 * learning_rate],
                         [-1 * pd_loss_wrt_w14 * learning_rate]])
@@ -191,10 +204,10 @@ def train_network(X, Y, layers, log_loss_every_k_steps=10, steps=60):
         # next,
         pd_loss_wrt_the_layer_1_weights = (
             calc_partial_derivative_of_loss_wrt_w_on_layer_1(
-                layers, pd_loss_wrt_w13, pd_loss_wrt_w14,
+                model.layers, pd_loss_wrt_w13, pd_loss_wrt_w14,
             ))
-        layers[1] = layers[1]._replace(
-            weights=layers[1].weights + np.array(
+        model.layers[1] = model.layers[1]._replace(
+            weights=model.layers[1].weights + np.array(
                 [
                     [pd_loss_wrt_the_layer_1_weights["w7"],
                         pd_loss_wrt_the_layer_1_weights["w8"], ],
@@ -208,12 +221,12 @@ def train_network(X, Y, layers, log_loss_every_k_steps=10, steps=60):
         x1, x2 = x[0], x[1]
         pd_loss_wrt_the_layer_0_weights = (
             calc_partial_derivative_of_loss_wrt_w_on_layer_0(
-                layers,
+                model.layers,
                 pd_loss_wrt_the_layer_1_weights,
                 x1, x2,))
 
-        layers[0] = layers[0]._replace(
-            weights=layers[0].weights + np.array(
+        model.layers[0] = model.layers[0]._replace(
+            weights=model.layers[0].weights + np.array(
                 [
                     [
                         pd_loss_wrt_the_layer_0_weights["w1"],
@@ -231,9 +244,10 @@ def train_network(X, Y, layers, log_loss_every_k_steps=10, steps=60):
 
 
 
-    _, total_loss = loss(layers, X, Y)
+    Y_prob, total_loss = loss(model.layers, X_validation, Y_validation)
     loss_vec.append(total_loss)
-    return loss_vec, layers, artifacts
+    return loss_vec, model, artifacts, X_validation, Y_validation, Y_prob
+
 
 def calc_partial_derivative_of_loss_wrt_w_on_layer_1(
     layers,
