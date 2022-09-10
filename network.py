@@ -87,17 +87,17 @@ def derivative_of_logit_to_prob_func(y_logit):
     return np.exp(y_logit) / ((1 + np.exp(y_logit))**2)
 
 
-def loss(layers, X, Y):
+def loss(model, X, Y):
     """Given the MLP and the dataset, find the loss.
 
     Args:
-        layers: MLP layers
+        model: MLP model
         X, Y: the dataset
     """
 
     Y_actual = []
     for i in tqdm(range(X.shape[0]), desc=" inner", position=1, leave=False):
-        y = feed_forward(X[i], layers)
+        y = feed_forward(X[i], model.layers)
         Y_actual.append(y)
 
     Y_actual = np.array(Y_actual)
@@ -161,27 +161,24 @@ def initialize_model(parameters):
     return model
 
 
-def train_network(X, Y, model, log_loss_every_k_steps=10, steps=60):
+def train_network(data, model, log_loss_every_k_steps=10, steps=60):
     # sgd loop
     learning_rate = model.parameters["learning_rate"]
-
-    X_train, X_validation, Y_train, Y_validation = train_test_split(
-        X, Y, test_size=0.1, random_state=42)
 
     artifacts = {}
 
     loss_vec = []
 
-    num_examples = X_train.shape[0]
+    num_examples = data.X_train.shape[0]
     for step in tqdm(range(steps), desc=" outer", position=0):
         i = np.random.choice(range(num_examples))
         # sample minibatch , (x, y),
-        x, y = X_train[i], Y_train[i]
+        x, y = data.X_train[i], data.Y_train[i]
 
         y_prob = feed_forward(x, model.layers, verbose=False)
 
         if step % log_loss_every_k_steps == 0:
-            _, total_loss = loss(model.layers, X_validation, Y_validation)
+            _, total_loss = loss(model, data.X_validation, data.Y_validation)
             loss_vec.append(total_loss)
             artifacts[str(step)] = {"model": deepcopy(model), "log_loss": total_loss}
 
@@ -244,9 +241,9 @@ def train_network(X, Y, model, log_loss_every_k_steps=10, steps=60):
 
 
 
-    Y_prob, total_loss = loss(model.layers, X_validation, Y_validation)
+    Y_prob, total_loss = loss(model, data.X_validation, data.Y_validation)
     loss_vec.append(total_loss)
-    return loss_vec, model, artifacts, X_validation, Y_validation, Y_prob
+    return loss_vec, model, artifacts, Y_prob
 
 
 def calc_partial_derivative_of_loss_wrt_w_on_layer_1(

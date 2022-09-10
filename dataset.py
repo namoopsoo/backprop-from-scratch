@@ -1,6 +1,11 @@
 import math
 import numpy as np
-from collections import Counter
+from collections import Counter, namedtuple
+from sklearn.model_selection import train_test_split
+
+Dataset = namedtuple("Dataset", [
+    "X_train", "X_validation", "Y_train", "Y_validation"
+    ])
 
 
 def build_dataset_inside_outside_circle(balance=0.5):
@@ -13,6 +18,7 @@ def build_dataset_inside_outside_circle(balance=0.5):
 
     # Validate balance
     assert abs(Counter(Y)[1]/num_samples - balance) < 0.02
-    return X, Y
+    X_train, X_validation, Y_train, Y_validation = train_test_split(
+        X, Y, test_size=0.1, random_state=42)
 
-
+    return Dataset(X_train, X_validation, Y_train, Y_validation)
