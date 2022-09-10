@@ -129,7 +129,7 @@ def concat_bias_weights(x):
 def initialize_network_layers():
     layers = [
         Layer(
-            weights=np.random.random((2, 3)), bias=np.array([1]),
+            weights=-0.5 + np.random.random((2, 3)), bias=np.array([1]),
             nodes={
                 "net_h1": None, "h1": None,
                 "net_h2": None, "h2": None,
@@ -137,13 +137,13 @@ def initialize_network_layers():
             }
         ),
         Layer(
-            weights=np.random.random((3, 2)), bias=np.array([1]),
+            weights=-0.5 + np.random.random((3, 2)), bias=np.array([1]),
             nodes={
                 "net_h4": None, "h4": None,
                 "net_h5": None, "h5": None,
             }
         ),
-        Layer(weights=np.random.random((2, 1)), bias=np.array([0]),
+        Layer(weights=-0.5 + np.random.random((2, 1)), bias=np.array([0]),
             nodes={
                 "net_y_logit": None, "y_logit": None,
                 "y_prob": None,
