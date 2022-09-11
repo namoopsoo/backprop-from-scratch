@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 from functools import partial
 from sklearn.utils.extmath import softmax
 from sklearn.metrics import log_loss
@@ -84,7 +85,7 @@ def logit_to_prob(y_logit):  # aka sigmoid
 
 
 def derivative_of_logit_to_prob_func(y_logit):
-    return np.exp(y_logit) / ((1 + np.exp(y_logit))**2)
+    return np.exp(-1 * y_logit) / ((1 + np.exp(-1 * y_logit))**2)
 
 
 def loss(model, X, Y):
