@@ -280,7 +280,9 @@ def calc_partial_derivative_of_loss_wrt_w_on_layer_1(
             * derivative_of_relu(net_h5)
             * h3),
     }
+    stop_for_nan(pd_loss_wrt_weights)
     return pd_loss_wrt_weights
+
 
 def calc_partial_derivative_of_loss_wrt_w_on_layer_0(
     layers,
@@ -319,6 +321,7 @@ def calc_partial_derivative_of_loss_wrt_w_on_layer_0(
             * derivative_of_relu(net_h3)
             * x2),
     }
+    stop_for_nan(pd_loss_wrt_weights)
     return pd_loss_wrt_weights
 
 
@@ -344,7 +347,20 @@ def calc_partial_derivative_of_loss_wrt_w13(layers, y, ):
         * derivative_of_relu(net_y_logit)
         * h4
     )
+
+    stop_for_nan(g)
+
     return g
+
+def stop_for_nan(x):
+    if isinstance(x, dict):
+        [stop_for_nan(thing) for thing in x.values()]
+    elif isinstance(x, list):
+        [stop_for_nan(thing) for thing in x]
+    elif pd.isnull(x):
+        import ipdb; ipdb.set_trace()
+        ...
+        ...
 
 
 def calc_partial_derivative_of_loss_wrt_w14(layers, y, ):
@@ -369,4 +385,5 @@ def calc_partial_derivative_of_loss_wrt_w14(layers, y, ):
         * derivative_of_relu(net_y_logit)
         * h5
     )
+    stop_for_nan(g)
     return g
