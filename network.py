@@ -391,26 +391,3 @@ def calc_partial_derivative_of_loss_wrt_w14(layers, y, ):
 
 
 
-def train_and_analysis(data):
-
-    model = n.initialize_model({"learning_rate": 0.01,
-        "steps": 10000})
-
-    (loss_vec, model, artifacts, Y_prob)  = n.train_network(data, model, steps=model.parameters["steps"])
-    out_loc = plot.plot_loss_vec(loss_vec)
-    print(out_loc)
-
-    out_loc = plot.plot_model_weights_across_rounds(model, artifacts)
-    print(out_loc)
-
-    out_loc = plot.plot_simple_historgram(Y_prob, label="Y_prob")
-    print(out_loc)
-
-    out_loc = plot.scatter_plot_by_z(data.X_validation, Y_prob, scaled=True) 
-    print(out_loc)
-
-    # TODO should automatically probably create this as a joblib metrics bundle, and then I can just load it after creating it . 
-
-
-
-
