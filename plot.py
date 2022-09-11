@@ -1,6 +1,7 @@
 
 import pylab
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import MinMaxScaler
 
 from mpl_toolkits import mplot3d
 import numpy as np
@@ -129,14 +130,21 @@ def scatter_plot_groups(X, Y):
     pylab.close()
 
 
-def scatter_plot_by_z(X, Y):
+def scatter_plot_by_z(X, Y, scaled=False):
     """
     Args:
         X: (x, y) coordinates
         Y: float from 0 to 1
+        scaled: apply MinMaxScaler to the data or not
+            
     """
     # expecting that 
     x, y = X[:, 0], X[:, 1]
+
+    if scaled:
+        scaler = MinMaxScaler()
+        Y = scaler.fit_transform(Y.reshape(-1, 1))
+        
     colors = map_values_to_colors(Y)
 
     fig = plt.figure()
@@ -194,5 +202,16 @@ def plot_model_weights_across_rounds(model, artifacts):
 
     out_loc = f"{utc_ts(utc_now())}-weights.png"
     fig.tight_layout()  # nice tip from https://www.geeksforgeeks.org/how-to-set-the-spacing-between-subplots-in-matplotlib-in-python/ , just learned about this !
+    pylab.savefig(out_loc, bbox_inches='tight')
+    return out_loc
+
+
+
+def plot_simple_historgram(Y_prob, label):
+    fig = plt.figure(figsize=(4,3))
+    ax = fig.add_subplot(111)
+    out_loc = f"{utc_ts(utc_now())}-hist.png"
+    ax.hist(Y_prob, bins=50)
+    ax.set(title=f"{label} histogram")
     pylab.savefig(out_loc, bbox_inches='tight')
     return out_loc
