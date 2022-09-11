@@ -204,7 +204,7 @@ def train_network(data, model, log_loss_every_k_steps=10, steps=60):
                 model.layers, pd_loss_wrt_w13, pd_loss_wrt_w14,
             ))
         model.layers[1] = model.layers[1]._replace(
-            weights=model.layers[1].weights + np.array(
+            weights=model.layers[1].weights + (-1) * learning_rate * np.array(
                 [
                     [pd_loss_wrt_the_layer_1_weights["w7"],
                         pd_loss_wrt_the_layer_1_weights["w8"], ],
@@ -223,7 +223,7 @@ def train_network(data, model, log_loss_every_k_steps=10, steps=60):
                 x1, x2,))
 
         model.layers[0] = model.layers[0]._replace(
-            weights=model.layers[0].weights + np.array(
+            weights=model.layers[0].weights + (-1) * learning_rate * np.array(
                 [
                     [
                         pd_loss_wrt_the_layer_0_weights["w1"],
