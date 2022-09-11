@@ -128,6 +128,7 @@ def scatter_plot_groups(X, Y):
     pylab.savefig(out_loc, bbox_inches="tight")
     pylab.close()
 
+
 def scatter_plot_by_z(X, Y):
     """
     Args:
@@ -145,6 +146,7 @@ def scatter_plot_by_z(X, Y):
     print("saving to", out_loc)
     pylab.savefig(out_loc, bbox_inches="tight")
     pylab.close()
+    return out_loc
 
 
 def map_values_to_colors(Y):
@@ -172,3 +174,25 @@ def adjust_color_lightness(r, g, b, factor):
 
 def darken_color(r, g, b, factor=0.1):
     return adjust_color_lightness(r, g, b, 1 - factor)
+
+
+def plot_model_weights_across_rounds(model, artifacts):
+    num_artifacts = len(artifacts)
+    num_layers = len(artifacts["0"]["model"].layers)
+    max_num_weights_per_layer = max([len(layer.weights.flatten()) for layer in artifacts["0"]["model"].layers])
+    num_weights = sum([len(layer.weights.flatten()) for layer in artifacts["0"]["model"].layers])
+
+    fig = plt.figure(figsize=(12,8))
+
+    for i  in range(num_layers):
+        for j, _ in enumerate(artifacts["0"]["model"].layers[i].weights.flatten()):
+            ax = fig.add_subplot(num_layers, max_num_weights_per_layer, 1 + i*max_num_weights_per_layer + j)
+            ax.plot([
+              artifacts[str(k * 10)]["model"].layers[i].weights.flatten()[j] for k in range(num_artifacts)
+            ])
+            ax.set(title=f"layer={i}, weight={j}", xlabel="rounds")
+
+    out_loc = f"{utc_ts(utc_now())}-weights.png"
+    fig.tight_layout()  # nice tip from https://www.geeksforgeeks.org/how-to-set-the-spacing-between-subplots-in-matplotlib-in-python/ , just learned about this !
+    pylab.savefig(out_loc, bbox_inches='tight')
+    return out_loc
