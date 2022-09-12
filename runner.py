@@ -6,8 +6,16 @@ def train_and_analysis(data, parameters):
 
     model = n.initialize_model(parameters)
 
-    (loss_vec, model, artifacts, Y_prob) = n.train_network(data, model, steps=model.parameters["steps"])
-    out_loc = plot.plot_loss_vec(loss_vec)
+    (metrics, model, artifacts, Y_prob) = n.train_network(
+        data,
+        model,
+        log_loss_every_k_steps=parameters["log_loss_every_k_steps"],
+        steps=model.parameters["steps"])
+
+    out_loc = plot.plot_train_and_validation_loss_vec(
+        metrics["train"]["loss_vec"],
+        metrics["validation"]["loss_vec"]
+    )
     print(out_loc)
 
     out_loc = plot.plot_model_weights_across_rounds(model, artifacts)

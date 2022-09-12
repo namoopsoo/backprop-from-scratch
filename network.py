@@ -168,7 +168,14 @@ def train_network(data, model, log_loss_every_k_steps=10, steps=60):
 
     artifacts = {}
 
-    loss_vec = []
+    metrics = {
+        "train": {
+            "loss_vec": [],
+        },
+        "validation": {
+            "loss_vec": [],
+        },
+    }
 
     num_examples = data.X_train.shape[0]
     for step in tqdm(range(steps), desc=" outer", position=0):
@@ -180,7 +187,11 @@ def train_network(data, model, log_loss_every_k_steps=10, steps=60):
 
         if step % log_loss_every_k_steps == 0:
             _, total_loss = loss(model, data.X_validation, data.Y_validation)
-            loss_vec.append(total_loss)
+            metrics["train"]["loss_vec"].append(total_loss)
+
+            _, total_loss = loss(model, data.X_train, data.Y_train)
+            metrics["validation"]["loss_vec"].append(total_loss)
+
             artifacts[str(step)] = {"model": deepcopy(model), "log_loss": total_loss}
 
         # calculate partial derivative at (x, y)
@@ -243,8 +254,14 @@ def train_network(data, model, log_loss_every_k_steps=10, steps=60):
 
 
     Y_prob, total_loss = loss(model, data.X_validation, data.Y_validation)
-    loss_vec.append(total_loss)
-    return loss_vec, model, artifacts, Y_prob
+
+    _, total_loss = loss(model, data.X_validation, data.Y_validation)
+    metrics["train"]["loss_vec"].append(total_loss)
+
+    _, total_loss = loss(model, data.X_train, data.Y_train)
+    metrics["validation"]["loss_vec"].append(total_loss)
+
+    return metrics, model, artifacts, Y_prob
 
 
 def calc_partial_derivative_of_loss_wrt_w_on_layer_1(

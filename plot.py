@@ -26,6 +26,22 @@ def plot_loss_vec(loss_vec):
         pylab.close()
     return out_loc
 
+
+def plot_train_and_validation_loss_vec(train_loss_vec, validation_loss_vec):
+    with plt.style.context("fivethirtyeight"):
+        plt.plot(train_loss_vec, label="train", color="blue")
+        plt.plot(validation_loss_vec, label="validation", color="green")
+        plt.xlabel("rounds")
+        plt.ylabel("log loss")
+        plt.title("log loss")
+        plt.legend()
+        out_loc = f"{utc_ts(utc_now())}.png"
+        print("saving to", out_loc)
+        pylab.savefig(out_loc, bbox_inches="tight")
+        pylab.close()
+    return out_loc
+
+
 def surface_plot_type1(x, y, z, how_many=None):
     # reference:  https://www.geeksforgeeks.org/3d-surface-plotting-in-python-using-matplotlib/
     if how_many is None:
