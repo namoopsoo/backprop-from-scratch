@@ -37,9 +37,10 @@ def feed_forward(x, layers, verbose=False):
             print("sizes:", H.shape, weights.shape)
 
         net_H = np.matmul(H, weights)
-        H = relu(net_H)
 
         if i == 0:
+            H = relu(net_H)
+
             layer.nodes["net_h1"] = net_H[0]
             layer.nodes["h1"] = H[0]
             layer.nodes["net_h2"] = net_H[1]
@@ -47,11 +48,14 @@ def feed_forward(x, layers, verbose=False):
             layer.nodes["net_h3"] = net_H[2]
             layer.nodes["h3"] = H[2]
         elif i == 1:
+            H = relu(net_H)
+
             layer.nodes["net_h4"] = net_H[0]
             layer.nodes["h4"] = H[0]
             layer.nodes["net_h5"] = net_H[1]
             layer.nodes["h5"] = H[1]
         elif i == 2:
+            H = net_H
             layer.nodes["net_y_logit"] = net_H[0]
             layer.nodes["y_logit"] = H[0]
 
