@@ -350,7 +350,6 @@ def calc_partial_derivative_of_loss_wrt_w_on_layer_0(
 def calc_partial_derivative_of_loss_wrt_w13(layers, y, ):
 
     # net_y = w13*h4 + w14*h5
-    # y_logit = relu(net_y)
     # y_prob = logit_to_prob(y_logit)
     # loss = log_loss(y_actual, y_prob)
 
@@ -366,7 +365,7 @@ def calc_partial_derivative_of_loss_wrt_w13(layers, y, ):
     g = (
         derivative_of_log_loss(y, y_prob)
         * derivative_of_logit_to_prob_func(y_logit)
-        * derivative_of_relu(net_y_logit)
+        # * derivative_of_relu(net_y_logit)
         * h4
     )
 
@@ -388,7 +387,6 @@ def stop_for_nan(x):
 def calc_partial_derivative_of_loss_wrt_w14(layers, y, ):
 
     # net_y = w13*h4 + w14*h5
-    # y_logit = relu(net_y)
     # y_prob = logit_to_prob(y_logit)
     # loss = log_loss(y_actual, y_prob)
 
@@ -404,7 +402,7 @@ def calc_partial_derivative_of_loss_wrt_w14(layers, y, ):
     g = (
         derivative_of_log_loss(y, y_prob)
         * derivative_of_logit_to_prob_func(y_logit)
-        * derivative_of_relu(net_y_logit)
+        # * derivative_of_relu(net_y_logit)
         * h5
     )
     stop_for_nan(g)
