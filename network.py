@@ -39,7 +39,8 @@ def feed_forward(x, layers, verbose=False):
         net_H = np.matmul(H, weights)
 
         if i == 0:
-            H = relu(net_H)
+            # H = relu(net_H)
+            H = logit_to_prob(net_H)
 
             layer.nodes["net_h1"] = net_H[0]
             layer.nodes["h1"] = H[0]
@@ -48,7 +49,8 @@ def feed_forward(x, layers, verbose=False):
             layer.nodes["net_h3"] = net_H[2]
             layer.nodes["h3"] = H[2]
         elif i == 1:
-            H = relu(net_H)
+            # H = relu(net_H)
+            H = logit_to_prob(net_H)
 
             layer.nodes["net_h4"] = net_H[0]
             layer.nodes["h4"] = H[0]
@@ -58,9 +60,6 @@ def feed_forward(x, layers, verbose=False):
             H = net_H
             layer.nodes["net_y_logit"] = net_H[0]
             layer.nodes["y_logit"] = H[0]
-
-        if verbose:
-            print("output of relu", H)
 
     y_logit = H[0]
     y_prob = logit_to_prob(y_logit) # aka sigmoid
@@ -282,24 +281,30 @@ def calc_partial_derivative_of_loss_wrt_w_on_layer_1(
     pd_loss_wrt_weights = {
         # for h4 weights,
         "w7": (pd_loss_wrt_w13
-            * derivative_of_relu(net_h4)
+            # * derivative_of_relu(net_h4)
+            * derivative_of_logit_to_prob_func(net_h4)
             * h1),
         "w9": (pd_loss_wrt_w13
-            * derivative_of_relu(net_h4)
+            # * derivative_of_relu(net_h4)
+            * derivative_of_logit_to_prob_func(net_h4)
             * h2),
         "w11": (pd_loss_wrt_w13
-            * derivative_of_relu(net_h4)
+            # * derivative_of_relu(net_h4)
+            * derivative_of_logit_to_prob_func(net_h4)
             * h3),
 
         # for h5 weights,
         "w8": (pd_loss_wrt_w14
-            * derivative_of_relu(net_h5)
+            # * derivative_of_relu(net_h5)
+            * derivative_of_logit_to_prob_func(net_h5)
             * h1),
         "w10": (pd_loss_wrt_w14
-            * derivative_of_relu(net_h5)
+            # * derivative_of_relu(net_h5)
+            * derivative_of_logit_to_prob_func(net_h5)
             * h2),
         "w12": (pd_loss_wrt_w14
-            * derivative_of_relu(net_h5)
+            # * derivative_of_relu(net_h5)
+            * derivative_of_logit_to_prob_func(net_h5)
             * h3),
     }
     stop_for_nan(pd_loss_wrt_weights)
@@ -319,28 +324,34 @@ def calc_partial_derivative_of_loss_wrt_w_on_layer_0(
     pd_loss_wrt_weights = {
         "w1": ((pd_loss_wrt_the_layer_1_weights["w7"]
                 + pd_loss_wrt_the_layer_1_weights["w8"])
-            * derivative_of_relu(net_h1)
+            # * derivative_of_relu(net_h1)
+            * derivative_of_logit_to_prob_func(net_h1)
             * x1),
         "w2": ((pd_loss_wrt_the_layer_1_weights["w9"]
                 + pd_loss_wrt_the_layer_1_weights["w10"])
-            * derivative_of_relu(net_h2)
+            # * derivative_of_relu(net_h2)
+            * derivative_of_logit_to_prob_func(net_h2)
             * x1),
         "w3": ((pd_loss_wrt_the_layer_1_weights["w11"]
                 + pd_loss_wrt_the_layer_1_weights["w12"])
-            * derivative_of_relu(net_h3)
+            # * derivative_of_relu(net_h3)
+            * derivative_of_logit_to_prob_func(net_h3)
             * x1),
 
         "w4": ((pd_loss_wrt_the_layer_1_weights["w7"]
                 + pd_loss_wrt_the_layer_1_weights["w8"])
-            * derivative_of_relu(net_h1)
+            # * derivative_of_relu(net_h1)
+            * derivative_of_logit_to_prob_func(net_h1)
             * x2),
         "w5": ((pd_loss_wrt_the_layer_1_weights["w9"]
                 + pd_loss_wrt_the_layer_1_weights["w10"])
-            * derivative_of_relu(net_h2)
+            # * derivative_of_relu(net_h2)
+            * derivative_of_logit_to_prob_func(net_h2)
             * x2),
         "w6": ((pd_loss_wrt_the_layer_1_weights["w11"]
                 + pd_loss_wrt_the_layer_1_weights["w12"])
-            * derivative_of_relu(net_h3)
+            # * derivative_of_relu(net_h3)
+            * derivative_of_logit_to_prob_func(net_h3)
             * x2),
     }
     stop_for_nan(pd_loss_wrt_weights)
