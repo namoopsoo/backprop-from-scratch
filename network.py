@@ -4,7 +4,7 @@ from functools import partial
 from sklearn.utils.extmath import softmax
 from sklearn.metrics import log_loss
 from sklearn.model_selection import train_test_split
-from collections import namedtuple
+from collections import namedtuple, defaultdict
 from copy import deepcopy
 from tqdm import tqdm
 
@@ -57,9 +57,9 @@ def feed_forward(x, layers, verbose=False):
             layer.nodes["net_h5"] = net_H[1]
             layer.nodes["h5"] = H[1]
         elif i == 2:
-            H = net_H
+            H = net_H # TODO since this is the same now , remove one to avoid confusion.
             layer.nodes["net_y_logit"] = net_H[0]
-            layer.nodes["y_logit"] = H[0]
+            layer.nodes["y_logit"] = H[0]   
 
     y_logit = H[0]
     y_prob = logit_to_prob(y_logit) # aka sigmoid
@@ -178,22 +178,28 @@ def train_network(data, model, log_loss_every_k_steps=10, steps=60):
         "validation": {
             "loss_vec": [],
         },
+        "micro_batch_updates": [],
     }
 
     num_examples = data.X_train.shape[0]
     for step in tqdm(range(steps), desc=" outer", position=0):
-        i = np.random.choice(range(num_examples))
+        # i = np.random.choice(range(num_examples))
         # sample minibatch , (x, y),
-        x, y = data.X_train[i], data.Y_train[i]
+        x, y = data.X_train[step], data.Y_train[step]
 
         y_prob = feed_forward(x, model.layers, verbose=False)
 
+        # Before update, 
+        y_actual, micro_batch_loss = loss(model, x.reshape((1, -1)), y.reshape((1, 1)))
+        micro_batch_dict = {"loss_before": micro_batch_loss, "y_actual_before": y_actual, 
+                            "x": x, "y": y}
+
         if step % log_loss_every_k_steps == 0:
             _, total_loss = loss(model, data.X_validation, data.Y_validation)
-            metrics["train"]["loss_vec"].append(total_loss)
-
-            _, total_loss = loss(model, data.X_train, data.Y_train)
             metrics["validation"]["loss_vec"].append(total_loss)
+
+            _, total_loss = loss(model, data.X_train[:steps], data.Y_train[:steps])
+            metrics["train"]["loss_vec"].append(total_loss)
 
             artifacts[str(step)] = {"model": deepcopy(model), "log_loss": total_loss}
 
@@ -203,7 +209,7 @@ def train_network(data, model, log_loss_every_k_steps=10, steps=60):
         pd_loss_wrt_w14 = calc_partial_derivative_of_loss_wrt_w14(model.layers, y, )
         # then update the parameter using the learning rate.
         #   storing in temporary values until later.
-
+        # TODO , assert that after applying update that the loss for the single example should be reduced ! otherwise something is terribly wrong I think. 
 
         # now finally update the actual parameters.
         model.layers[-1] = model.layers[-1]._replace(
@@ -254,14 +260,15 @@ def train_network(data, model, log_loss_every_k_steps=10, steps=60):
             )
         )
 
+        # micro batch loss after the gradient descent step with that data point.
+        y_actual, micro_batch_loss = loss(model, x.reshape((1, -1)), y.reshape((1, 1)))
+        micro_batch_dict.update({"loss_after": micro_batch_loss, "y_actual_after": y_actual,})
+        micro_batch_updates.append(micro_batch_dict)
 
-
-    Y_prob, total_loss = loss(model, data.X_validation, data.Y_validation)
-
-    _, total_loss = loss(model, data.X_validation, data.Y_validation)
+    _, total_loss = loss(model, data.X_train[:steps], data.Y_train[:steps])
     metrics["train"]["loss_vec"].append(total_loss)
 
-    _, total_loss = loss(model, data.X_train, data.Y_train)
+    Y_prob, total_loss = loss(model, data.X_validation, data.Y_validation)
     metrics["validation"]["loss_vec"].append(total_loss)
 
     return metrics, model, artifacts, Y_prob
@@ -370,7 +377,7 @@ def calc_partial_derivative_of_loss_wrt_w13(layers, y, ):
     # y = y
     y_prob = layers[-1].nodes["y_prob"]
     y_logit = layers[-1].nodes["y_logit"]
-    net_y_logit = layers[-1].nodes["net_y_logit"]   # TODO most likely I should just change the activation function here.
+    # net_y_logit = layers[-1].nodes["net_y_logit"]   # XXX no longer used.
     h4 = layers[-2].nodes["h4"]
 
     g = (
