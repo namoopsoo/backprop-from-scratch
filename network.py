@@ -263,7 +263,7 @@ def train_network(data, model, log_loss_every_k_steps=10, steps=60):
         # micro batch loss after the gradient descent step with that data point.
         y_actual, micro_batch_loss = loss(model, x.reshape((1, -1)), y.reshape((1, 1)))
         micro_batch_dict.update({"loss_after": micro_batch_loss, "y_actual_after": y_actual,})
-        micro_batch_updates.append(micro_batch_dict)
+        metrics["micro_batch_updates"].append(micro_batch_dict)
 
     _, total_loss = loss(model, data.X_train[:steps], data.Y_train[:steps])
     metrics["train"]["loss_vec"].append(total_loss)

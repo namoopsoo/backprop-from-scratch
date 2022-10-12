@@ -231,3 +231,19 @@ def plot_simple_historgram(Y_prob, label):
     ax.set(title=f"{label} histogram")
     pylab.savefig(out_loc, bbox_inches='tight')
     return out_loc
+
+
+
+def micro_batch_delta_loss_plot(metrics):
+    deltas = [x["loss_after"] - x["loss_before"] for x in metrics["micro_batch_updates"]]
+    with plt.style.context("fivethirtyeight"):
+        fig = plt.figure(figsize =(20, 9))
+
+        plt.plot(deltas, linewidth=0.7)
+        plt.title("Microbatch loss_after - loss_before")
+        out_loc = f"{utc_ts(utc_now())}-micro-batch-loss-deltas-over-steps.png"
+        print("saving to", out_loc)
+        pylab.savefig(out_loc, bbox_inches="tight")
+        pylab.close()
+        plt.close()
+    return out_loc

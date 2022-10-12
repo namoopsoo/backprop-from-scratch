@@ -27,10 +27,13 @@ def train_and_analysis(data, parameters):
     out_loc = plot.scatter_plot_by_z(data.X_validation, Y_prob, scaled=True) 
     print(out_loc)
 
+    out_loc = plot.micro_batch_delta_loss_plot(metrics)
+    print(out_loc)
+
     # TODO should automatically probably create this as a joblib metrics bundle, and then I can just load it after creating it . 
 
 
-    return model, artifacts
+    return model, artifacts, metrics
 
 
 
