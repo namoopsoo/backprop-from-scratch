@@ -247,3 +247,22 @@ def micro_batch_delta_loss_plot(metrics):
         pylab.close()
         plt.close()
     return out_loc
+
+
+def plot_grid(vec, side, title):
+
+    with plt.style.context("fivethirtyeight"):
+        fig = plt.figure(figsize=(20, 20))
+        for i in range(side*side):
+            values, subtitle = vec[i]
+            ax = fig.add_subplot(side, side, i + 1)
+            ax.hist(values, linewidth=0.7)
+            ax.set(title=subtitle)
+
+        out_loc = f"{utc_ts(utc_now())}-{title}.png"
+        fig.tight_layout() 
+        print("saving to", out_loc)
+        pylab.savefig(out_loc, bbox_inches="tight")
+        pylab.close()
+        plt.close()
+    return out_loc
