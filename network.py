@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from functools import partial
+from itertools import product
 from sklearn.utils.extmath import softmax
 from sklearn.metrics import log_loss
 from sklearn.model_selection import train_test_split
@@ -24,11 +25,11 @@ def derivative_of_relu(h_net):
         return 0
 
 
-def feed_forward(x, layers, verbose=False):
+def feed_forward(x, model, verbose=False):
     # TODO make this take arbitrary number of inputs, i.e. , vectorize it.
     values = []
     H = x
-    for (i, layer) in enumerate(layers):
+    for (i, layer) in enumerate(model.layers):
         if verbose:
             print(i, layer)
         weights = concat_bias_weights(layer.weights)
@@ -64,7 +65,7 @@ def feed_forward(x, layers, verbose=False):
 
     y_logit = H[0]
     y_prob = logit_to_prob(y_logit) # aka sigmoid
-    layers[-1].nodes["y_prob"] = y_prob
+    model.layers[-1].nodes["y_prob"] = y_prob
 
     assert isinstance(y_prob, np.int64) or isinstance(y_prob, np.float64)
 
@@ -107,7 +108,7 @@ def loss(model, X, Y):
 
     Y_actual = []
     for i in tqdm(range(X.shape[0]), desc=" inner", position=1, leave=False):
-        y = feed_forward(X[i], model.layers)
+        y = feed_forward(X[i], model)
         Y_actual.append(y)
 
     Y_actual = np.array(Y_actual)
@@ -171,6 +172,10 @@ def initialize_model(parameters):
     )
 
     scaler = MinMaxScaler()
+    outputs = np.array([
+        feed_forward(np.array([x1, x2]), model, verbose=False)
+        for x1, x2 in product(np.arange(0, 1, .01), np.arange(0, 1, .01))])
+    
     y_prob_scaled = scaler.fit_transform(outputs.reshape(-1, 1))
     model = model._replace(min_max_scaler=scaler)
 
@@ -199,7 +204,7 @@ def train_network(data, model, log_loss_every_k_steps=10, steps=60):
         # sample minibatch , (x, y),
         x, y = data.X_train[step], data.Y_train[step]
 
-        y_prob = feed_forward(x, model.layers, verbose=False)
+        y_prob = feed_forward(x, model, verbose=False)
 
         # Before update, 
         y_actual, micro_batch_loss = loss(model, x.reshape((1, -1)), y.reshape((1, 1)))
