@@ -4,6 +4,7 @@ from functools import partial
 from sklearn.utils.extmath import softmax
 from sklearn.metrics import log_loss
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
 from collections import namedtuple, defaultdict
 from copy import deepcopy
 from tqdm import tqdm
@@ -11,7 +12,7 @@ from tqdm import tqdm
 from utils import utc_now, utc_ts
 
 Layer = namedtuple("Layer", ["weights", "bias", "nodes"])
-Model = namedtuple("Model", ["layers", "parameters"])
+Model = namedtuple("Model", ["layers", "parameters", "min_max_scaler"])
 
 relu_scalar = partial(max, 0)
 relu = np.vectorize(relu_scalar)
@@ -67,10 +68,15 @@ def feed_forward(x, layers, verbose=False):
 
     assert isinstance(y_prob, np.int64) or isinstance(y_prob, np.float64)
 
+
+    y_prob = model.min_max_scaler.transform(np.array([y_prob]).reshape(-1, 1))[0][0]
+    y_prob = 1. if y_prob > 1 else 0. if y_prob < 0 else y_prob
+
     if np.isnan(y_prob):
         print("oops!")
         import ipdb; ipdb.set_trace()
     return y_prob
+
 
 def logit_to_prob(y_logit):  # aka sigmoid
     # Well since this neural net is not returning a probability by default,
@@ -161,7 +167,13 @@ def initialize_model(parameters):
     model = Model(
         layers=initialize_network_layers(),
         parameters=parameters,
+        min_max_scaler=None,
     )
+
+    scaler = MinMaxScaler()
+    y_prob_scaled = scaler.fit_transform(outputs.reshape(-1, 1))
+    model = model._replace(min_max_scaler=scaler)
+
     return model
 
 

@@ -250,9 +250,10 @@ def micro_batch_delta_loss_plot(metrics):
 
 
 def plot_grid(vec, side, title):
+    fig_length = side * 4
 
     with plt.style.context("fivethirtyeight"):
-        fig = plt.figure(figsize=(20, 20))
+        fig = plt.figure(figsize=(fig_length, fig_length))
         for i in range(side*side):
             values, subtitle = vec[i]
             ax = fig.add_subplot(side, side, i + 1)
