@@ -25,7 +25,7 @@ def derivative_of_relu(h_net):
         return 0
 
 
-def feed_forward(x, model, verbose=False):
+def feed_forward(x, model, verbose=False, scale_output=True):
     # TODO make this take arbitrary number of inputs, i.e. , vectorize it.
     values = []
     H = x
@@ -69,9 +69,9 @@ def feed_forward(x, model, verbose=False):
 
     assert isinstance(y_prob, np.int64) or isinstance(y_prob, np.float64)
 
-
-    y_prob = model.min_max_scaler.transform(np.array([y_prob]).reshape(-1, 1))[0][0]
-    y_prob = 1. if y_prob > 1 else 0. if y_prob < 0 else y_prob
+    if scale_output:
+        y_prob = model.min_max_scaler.transform(np.array([y_prob]).reshape(-1, 1))[0][0]
+        y_prob = 1. if y_prob > 1 else 0. if y_prob < 0 else y_prob
 
     if np.isnan(y_prob):
         print("oops!")
@@ -79,7 +79,7 @@ def feed_forward(x, model, verbose=False):
     return y_prob
 
 
-def logit_to_prob(y_logit):  # aka sigmoid
+def logit_to_prob(y_logit):  # aka logistic func type sigmoid
     # Well since this neural net is not returning a probability by default,
     #   then we need something like softmax to do that.
     #   Also this person , https://sebastiansauer.github.io/convert_logit2prob/ ,
@@ -173,7 +173,7 @@ def initialize_model(parameters):
 
     scaler = MinMaxScaler()
     outputs = np.array([
-        feed_forward(np.array([x1, x2]), model, verbose=False)
+        feed_forward(np.array([x1, x2]), model, verbose=False, scale_output=False)
         for x1, x2 in product(np.arange(0, 1, .01), np.arange(0, 1, .01))])
     
     y_prob_scaled = scaler.fit_transform(outputs.reshape(-1, 1))
